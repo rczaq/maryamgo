@@ -1,13 +1,23 @@
 <?php
 
 use Livewire\Component;
+use Livewire\WithFileUploads;
 use App\Models\User;
 use App\Models\Produk;
 use Illuminate\Support\Facades\Auth;
 
 new class extends Component
 {
+    use WithFileUploads;
+
     public $halamanAktif = 'dashboard';
+
+    // Property Pengaturan QRIS
+    public $namaMerchant = 'MARYAM GO STORE';
+    public $nmid = 'ID102026987654321';
+    public $qrisStatus = 'aktif';
+    public $qrisFoto;
+    public $qrisFotoLama = null;
 
     public function mount()
     {
@@ -44,6 +54,24 @@ new class extends Component
     public function produkTerbaru()
     {
         return Produk::latest()->take(5)->get();
+    }
+
+    public function simpanQris()
+    {
+        $this->validate([
+            'namaMerchant' => 'required|string|max:100',
+            'nmid' => 'required|string|max:50',
+            'qrisStatus' => 'required|in:aktif,nonaktif',
+            'qrisFoto' => 'nullable|image|max:2048', // Max 2MB
+        ]);
+
+        if ($this->qrisFoto) {
+            // Logika simpan gambar QRIS ke storage (contoh simpan ke folder public/qris)
+            // $path = $this->qrisFoto->store('qris', 'public');
+            // $this->qrisFotoLama = $path;
+        }
+
+        session()->flash('qris_success', 'Konfigurasi & QRIS Merchant berhasil diperbarui!');
     }
 
     public function logout()
@@ -99,7 +127,6 @@ new class extends Component
         .font-display { font-family: 'Space Grotesk', sans-serif; }
         .font-mono-data { font-family: 'JetBrains Mono', monospace; }
 
-        /* Modern market-ticket tag with sharp borders */
         .tag-ticket {
             position: relative;
             display: inline-flex;
@@ -196,6 +223,19 @@ new class extends Component
                         <span>Kelola Transaksi</span>
                     </button> 
                 </div>
+
+                <!-- Konfigurasi Sistem -->
+                <div class="space-y-1">
+                    <p class="px-2.5 mb-2.5 text-[9px] font-bold uppercase tracking-widest text-slate-500 select-none">Pengaturan Kasir</p>
+                    
+                    <!-- Seting QRIS -->
+                    <button @click.prevent="bukaTab('qris', 'Pengaturan QRIS', 'qr_code_2')"
+                            class="w-full flex items-center gap-3 px-3.5 py-3 rounded-xl text-left text-xs font-semibold transition-all duration-200 cursor-pointer"
+                            :class="activeTab === 'qris' ? 'bg-gradient-to-r from-[#6366F1] to-[#4F46E5] text-white shadow-lg shadow-indigo-950/50' : 'text-slate-400 hover:bg-white/[0.04] hover:text-white'">
+                        <span class="material-symbols-outlined text-lg" :style="activeTab === 'qris' && 'font-variation-settings: \'FILL\' 1;'">qr_code_2</span>
+                        <span>Pengaturan QRIS</span>
+                    </button>
+                </div>
             </nav>
         </div>
 
@@ -226,7 +266,7 @@ new class extends Component
                     <span class="uppercase text-[9px] tracking-widest font-bold">Workspace</span>
                     <span class="material-symbols-outlined text-sm text-slate-300">chevron_right</span>
                     <span class="font-bold font-display text-slate-900 text-sm" 
-                          x-text="activeTab === 'dashboard' ? 'Dashboard' : (activeTab === 'produk' ? 'Kelola Produk' : 'Kelola Transaksi')"></span>
+                          x-text="activeTab === 'dashboard' ? 'Dashboard' : (activeTab === 'produk' ? 'Kelola Produk' : (activeTab === 'transaksi' ? 'Kelola Transaksi' : 'Pengaturan QRIS'))"></span>
                 </div>
             </div>
 
@@ -418,6 +458,24 @@ new class extends Component
                     <div class="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm">
                         <livewire:pages::admin.transaksi :key="'sub-transaksi-aktif'" />
                     </div>
+                </div>
+
+                <!-- TAB PANEL: PENGATURAN QRIS VIEW -->
+                <div x-show="activeTab === 'qris'"
+                     class="space-y-6"
+                     x-transition:enter="transition ease-out duration-200"
+                     x-transition:enter-start="opacity-0 translate-y-2"
+                     x-transition:enter-end="opacity-100 translate-y-0">
+
+                    <div>
+                        <h2 class="text-xl font-bold tracking-tight font-display text-slate-900">Pengaturan QRIS Merchant</h2>
+                        <p class="text-xs text-slate-500 mt-0.5">Konfigurasi nama merchant, kode NMID, dan barcode QRIS pembayaran toko.</p>
+                    </div>
+
+                    <div class="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm">
+                        <livewire:pages::admin.pengaturan :key="'sub-transaksi-aktif'" />
+                    </div>
+
                 </div>
 
             </div>
